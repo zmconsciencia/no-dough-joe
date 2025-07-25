@@ -1,0 +1,31 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: budget
+    ports: ["5432:5432"]
+    volumes: ["db_data:/var/lib/postgresql/data"]
+
+  backend:
+    build:
+      context: .
+      dockerfile: /packages/backend/Dockerfile
+    env_file: .env
+    depends_on: [db]
+    ports: ["4000:4000"]
+
+  frontend:
+    build: 
+      context: .
+      dockerfile: /packages/frontend/Dockerfile
+    env_file: .env
+    depends_on:
+      - backend
+    ports:
+      - "3000:80"
+
+
+volumes:
+  db_data:

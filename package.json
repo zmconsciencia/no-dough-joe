@@ -1,0 +1,11 @@
+{
+  "name": "no-dough-joe",
+  "private": true,
+  "packageManager": "yarn@4.9.2",
+  "workspaces": [
+    "packages/*"
+  ],
+  "devDependencies": {
+    "prisma": "^6.12.0"
+  }
+}
