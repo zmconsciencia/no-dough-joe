@@ -1,19 +1,19 @@
-# Step 1: Build
-FROM node:20-alpine AS builder
+FROM node:20-alpine
 WORKDIR /app
 
-# Copy root dependencies
-COPY package.json yarn.lock ./
+# Copy root config and lockfiles
+COPY ../../package.json ../../yarn.lock ./
+COPY ../../.yarn ./.yarn
+COPY ../../.yarnrc.yml ./
 
-# Copy frontend workspace
-COPY packages/frontend ./packages/frontend
+# Copy frontend source
+COPY ./packages/frontend ./packages/frontend
 
-# Focus only frontend deps and build it
+# Enable yarn and install
 RUN corepack enable && corepack prepare yarn@4.9.2 --activate
-RUN yarn workspaces focus frontend
-RUN yarn workspace frontend build
+RUN yarn install
 
-# Step 2: Serve
-FROM nginx:1.27-alpine
-COPY --from=builder /app/packages/frontend/dist /usr/share/nginx/html
-COPY packages/frontend/nginx.conf /etc/nginx/conf.d/default.conf
+# Start dev server (assumes Vite)
+WORKDIR /app/packages/frontend
+EXPOSE 3000
+CMD ["yarn", "dev"]

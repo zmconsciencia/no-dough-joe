@@ -1,7 +1,6 @@
 import axios from 'axios';
 import type { AxiosRequestConfig } from 'axios';
 
-
 export const api = axios.create({
   baseURL: import.meta.env['VITE_API_URL'],
 });
@@ -10,9 +9,6 @@ const get = async <T>(url: string, config?: AxiosRequestConfig<any> | undefined)
   try {
     const res = await api.get<T>(url, {
       ...config,
-      headers: {
-        userName: getUsername(),
-      },
     });
     return res.data;
   } catch (err) {

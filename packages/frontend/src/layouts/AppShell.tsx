@@ -7,7 +7,7 @@ export default function AppShell() {
       <AppBar position="static">
         <Toolbar>
           <Typography variant="h6" component="div">
-            No Dough Joe
+            No Dough Joey
           </Typography>
         </Toolbar>
       </AppBar>
