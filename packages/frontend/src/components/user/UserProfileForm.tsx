@@ -3,61 +3,51 @@ import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { enGB } from 'date-fns/locale/en-GB';
 import { format } from 'date-fns';
-
+import { useRef, useMemo, useCallback } from 'react';
+import { useToast } from '../../hooks/useToast';
 import type { UserProfileFormValues } from '../../models/user-profile.model';
-import { use, useEffect, useState } from 'react';
+import { CURRENCY_OPTIONS } from '../../constants/currency';
 
-const currencyOptions = [
-  { code: 'EUR', symbol: '€', name: 'Euro' },
-  { code: 'USD', symbol: '$', name: 'US Dollar' },
-  { code: 'GBP', symbol: '£', name: 'British Pound' },
-] as const;
 
 type Props = {
   values: UserProfileFormValues;
   onChange: (field: keyof UserProfileFormValues, value: string | number) => void;
-  onSubmit: () => void;
+  onSubmit: () => Promise<void>;
   saving: boolean;
 };
 
-export const UserProfileForm = ({ values, onChange, onSubmit, saving }: Props) => {
-  const initialValues: UserProfileFormValues = {
-    fullName: values.fullName || '',
-    email: values.email || '',
-    avatarUrl: values.avatarUrl || '',
-    dateOfBirth: values.dateOfBirth || '',
-    monthlyIncome: values.monthlyIncome || 0,
-    currency: values.currency || 'EUR',
-    payday: values.payday || 1,
-    savingsGoal: values.savingsGoal || 0,
-  };
-  const currencySymbol = currencyOptions.find((c) => c.code === values.currency)?.symbol ?? '';
-  const dobDate: Date | null = values.dateOfBirth ? new Date(values.dateOfBirth) : null;
-  const [disable, setDisable] = useState(false);
+export function UserProfileForm({ values, onChange, onSubmit, saving }: Props) {
+  const toast = useToast();
+  const initialRef = useRef<UserProfileFormValues>(structuredClone(values));
+  const isPristine = useMemo(() => JSON.stringify(values) === JSON.stringify(initialRef.current), [values]);
 
-  useEffect(() => {
-    console.log('aqui');
-    setDisable(JSON.stringify(initialValues) === JSON.stringify(values));
-    console.log('disable', disable, initialValues, values);
-  }, [values]);
+  const currencySymbol = CURRENCY_OPTIONS.find((c) => c.code === values.currency)?.symbol ?? '';
+
+  const dobDate = values.dateOfBirth ? new Date(values.dateOfBirth) : null;
+
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      try {
+        await onSubmit();
+        toast.success('Profile saved');
+        initialRef.current = structuredClone(values);
+      } catch {
+        toast.error('Failed to save profile');
+      }
+    },
+    [onSubmit, toast, values],
+  );
+
+  const handleReset = useCallback(() => {
+    Object.entries(initialRef.current).forEach(([k, v]) => onChange(k as keyof UserProfileFormValues, v as string | number));
+  }, [onChange]);
 
   return (
-    <Box
-      component="form"
-      onSubmit={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        console.log(initialValues == values, initialValues, values);
-        onSubmit();
-      }}
-      sx={{ px: 2, py: 4, width: '100%', maxWidth: 600, mx: 'auto' }}
-      noValidate
-    >
+    <Box component="form" onSubmit={handleSubmit} sx={{ px: 2, py: 4, width: '100%', maxWidth: 600, mx: 'auto' }} noValidate>
       <Stack spacing={4}>
-        <Box>
-          <Typography variant="h6" gutterBottom>
-            User Information
-          </Typography>
+        <Section title="User Information">
           <Stack spacing={2}>
             <TextField
               size="small"
@@ -93,18 +83,14 @@ export const UserProfileForm = ({ values, onChange, onSubmit, saving }: Props) =
                 label="Date of Birth"
                 value={dobDate}
                 maxDate={new Date()}
-                onChange={(newVal) => onChange('dateOfBirth', newVal ? format(newVal, 'yyyy-MM-dd') : '')}
-                slotProps={{
-                  textField: { fullWidth: true, required: true, size: 'small' },
-                }}
+                onChange={(d) => onChange('dateOfBirth', d ? format(d, 'yyyy-MM-dd') : '')}
+                slotProps={{ textField: { fullWidth: true, required: true, size: 'small' } }}
               />
             </LocalizationProvider>
           </Stack>
-        </Box>
-        <Box>
-          <Typography variant="h6" gutterBottom>
-            Financial Information
-          </Typography>
+        </Section>
+
+        <Section title="Financial Information">
           <Stack spacing={2}>
             <TextField
               size="small"
@@ -121,7 +107,6 @@ export const UserProfileForm = ({ values, onChange, onSubmit, saving }: Props) =
               value={values.monthlyIncome}
               onChange={(e) => onChange('monthlyIncome', +e.target.value)}
             />
-
             <TextField
               size="small"
               type="number"
@@ -138,12 +123,9 @@ export const UserProfileForm = ({ values, onChange, onSubmit, saving }: Props) =
               onChange={(e) => onChange('savingsGoal', +e.target.value)}
             />
           </Stack>
-        </Box>
+        </Section>
 
-        <Box>
-          <Typography variant="h6" gutterBottom>
-            Preferences
-          </Typography>
+        <Section title="Preferences">
           <Stack spacing={2}>
             <TextField
               size="small"
@@ -154,9 +136,9 @@ export const UserProfileForm = ({ values, onChange, onSubmit, saving }: Props) =
               value={values.currency}
               onChange={(e) => onChange('currency', e.target.value)}
             >
-              {currencyOptions.map((c) => (
+              {CURRENCY_OPTIONS.map((c) => (
                 <MenuItem key={c.code} value={c.code}>
-                  {c.code} — {c.name}
+                  {c.code} – {c.name}
                 </MenuItem>
               ))}
             </TextField>
@@ -171,13 +153,30 @@ export const UserProfileForm = ({ values, onChange, onSubmit, saving }: Props) =
               onChange={(e) => onChange('payday', +e.target.value)}
             />
           </Stack>
-        </Box>
-        <Box display="flex" justifyContent="flex-end">
-          <Button type="submit" variant="outlined" size="small" disabled={disable}>
+        </Section>
+
+        <Box display="flex" justifyContent="flex-end" gap={1} mt={2}>
+          {!isPristine && (
+            <Button variant="contained" size="small" onClick={handleReset}>
+              Reset
+            </Button>
+          )}
+          <Button type="submit" variant="outlined" size="small" disabled={saving || isPristine}>
             {saving ? <CircularProgress size={24} /> : 'Save'}
           </Button>
         </Box>
       </Stack>
     </Box>
   );
-};
+}
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <Box>
+      <Typography variant="h6" gutterBottom>
+        {title}
+      </Typography>
+      {children}
+    </Box>
+  );
+}

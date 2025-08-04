@@ -1,4 +1,5 @@
-import { PrismaClient } from '@prisma/client';
+require('dotenv').config();
+const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 async function main() {
@@ -21,4 +22,9 @@ async function main() {
 
   console.log('Mock user created:', user);
 }
-main().finally(() => prisma.$disconnect());
+main()
+  .catch((e) => {
+    console.error(e);
+    process.exit(1);
+  })
+  .finally(() => prisma.$disconnect());

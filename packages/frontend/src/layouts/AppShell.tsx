@@ -1,21 +1,76 @@
-import { AppBar, Box, Toolbar, Typography, Container } from '@mui/material';
-import { Outlet } from 'react-router-dom';
+import {
+  AppBar,
+  Box,
+  Toolbar,
+  Typography,
+  IconButton,
+  Drawer,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemText,
+  CssBaseline,
+} from '@mui/material';
+import MenuIcon from '@mui/icons-material/Menu';
+import { Outlet, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+
+const drawerWidth = 240;
+
+const menuItems = [
+  { label: 'Home', path: '/' },
+  { label: 'Dashboard', path: '/dashboard' },
+  { label: 'Profile', path: '/user-profile' },
+];
 
 export default function AppShell() {
+  const [open, setOpen] = useState(true);
+  const navigate = useNavigate();
+  const toggleDrawer = () => setOpen((v) => !v);
+
   return (
-    <>
-      <AppBar position="static">
+    <Box sx={{ display: 'flex' }}>
+      <CssBaseline />
+      <AppBar position="fixed" sx={{ zIndex: (t) => t.zIndex.drawer + 1 }}>
         <Toolbar>
-          <Typography variant="h6" component="div">
-            No Dough Joey
+          <IconButton size="large" edge="start" color="inherit" onClick={toggleDrawer} sx={{ mr: 2 }}>
+            <MenuIcon />
+          </IconButton>
+          <Typography variant="h6" noWrap>
+            No Dough Joe
           </Typography>
         </Toolbar>
       </AppBar>
-      <Box component="main" sx={{ p: 2 }}>
-        <Container>
-          <Outlet />
-        </Container>
+
+      <Drawer variant="persistent" anchor="left" open={open} sx={{ '& .MuiDrawer-paper': { width: drawerWidth, boxSizing: 'border-box' } }}>
+        <Toolbar />
+        <List>
+          {menuItems.map((item) => (
+            <ListItem key={item.path} disablePadding>
+              <ListItemButton onClick={() => navigate(item.path)}>
+                <ListItemText primary={item.label} />
+              </ListItemButton>
+            </ListItem>
+          ))}
+        </List>
+      </Drawer>
+
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          p: 2,
+          ml: open ? `${drawerWidth}px` : 0,
+          transition: (t) =>
+            t.transitions.create('margin', {
+              easing: t.transitions.easing.sharp,
+              duration: t.transitions.duration.enteringScreen,
+            }),
+        }}
+      >
+        <Toolbar />
+        <Outlet />
       </Box>
-    </>
+    </Box>
   );
 }
