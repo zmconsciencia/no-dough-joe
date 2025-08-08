@@ -1,3 +1,4 @@
+// in AppShell.tsx
 import {
   AppBar,
   Box,
@@ -10,10 +11,13 @@ import {
   ListItemButton,
   ListItemText,
   CssBaseline,
+  Button,
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
+import { useUserStore } from '../state/user/user.state';
+import { authService } from '../services/auth.service';
 
 const drawerWidth = 240;
 
@@ -27,18 +31,36 @@ export default function AppShell() {
   const [open, setOpen] = useState(true);
   const navigate = useNavigate();
   const toggleDrawer = () => setOpen((v) => !v);
+  const user = useUserStore((s) => s.user);
 
   return (
     <Box sx={{ display: 'flex' }}>
       <CssBaseline />
       <AppBar position="fixed" sx={{ zIndex: (t) => t.zIndex.drawer + 1 }}>
-        <Toolbar>
-          <IconButton size="large" edge="start" color="inherit" onClick={toggleDrawer} sx={{ mr: 2 }}>
+        <Toolbar sx={{ gap: 2 }}>
+          <IconButton size="large" edge="start" color="inherit" onClick={toggleDrawer}>
             <MenuIcon />
           </IconButton>
-          <Typography variant="h6" noWrap>
+          <Typography variant="h6" noWrap sx={{ flexGrow: 1 }}>
             No Dough Joe
           </Typography>
+          {user && (
+            <>
+              <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                {user.email}
+              </Typography>
+              <Button
+                color="inherit"
+                size="small"
+                onClick={async () => {
+                  await authService.logout();
+                  navigate('/login');
+                }}
+              >
+                Logout
+              </Button>
+            </>
+          )}
         </Toolbar>
       </AppBar>
 

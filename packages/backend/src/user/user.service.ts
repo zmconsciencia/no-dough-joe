@@ -1,92 +1,80 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from 'src/common/prisma.service';
 import { UpdateUserProfileDto } from './dto/update-user-profile.dto';
-import type { RequestUser } from 'src/common/types/request-user.interface';
+import type { UserWithProfile } from './user.types';
 
 @Injectable()
 export class UserService {
   constructor(private readonly prisma: PrismaService) {}
 
-  /**
-   * Ensures both User and UserProfile exist for the mocked user,
-   * then returns the full user with embedded profile.
-   */
-  async getOrCreateMe(user: RequestUser) {
-    const result = await this.prisma.$transaction(async (tx) => {
-      const userRecord = await tx.user.upsert({
-        where: { id: user.id },
-        update: {},
-        create: {
-          id: user.id,
-          email: user.email,
-          password: 'mockpass',
-        },
+  async getMe(userId: string): Promise<UserWithProfile | null> {
+    return this.prisma.$transaction(async (tx) => {
+      const existing = await tx.user.findUnique({
+        where: { id: userId },
+        include: { profile: true },
       });
 
-      await tx.userProfile.upsert({
-        where: { userId: userRecord.id },
-        update: {},
-        create: {
-          userId: userRecord.id,
-          fullName: 'Mock Admin',
-          avatarUrl: 'https://i.pravatar.cc/150?img=1',
-          dateOfBirth: new Date('1990-01-01'),
-          monthlyIncome: 2500,
-          currency: 'EUR',
-          payday: 25,
-          savingsGoal: 5000,
+      if (!existing) throw new NotFoundException('User not found');
+
+      if (!existing.profile) {
+        await tx.userProfile.create({ data: { userId } });
+      }
+
+      return tx.user.findUnique({
+        where: { id: userId },
+        include: { profile: true },
+      });
+    });
+  }
+
+  async updateProfileAndReturnUser(
+    userId: string,
+    dto: UpdateUserProfileDto,
+  ): Promise<UserWithProfile | null> {
+    return this.prisma.$transaction(async (tx) => {
+      if (dto.email) {
+        const other = await tx.user.findUnique({ where: { email: dto.email } });
+        if (other && other.id !== userId) {
+          throw new BadRequestException('Email already in use');
+        }
+        await tx.user.update({
+          where: { id: userId },
+          data: { email: dto.email },
+        });
+      }
+
+      const profile = await tx.userProfile.findUnique({ where: { userId } });
+      if (!profile) {
+        await tx.userProfile.create({ data: { userId } });
+      }
+
+      const dob =
+        dto.dateOfBirth !== undefined ? new Date(dto.dateOfBirth) : undefined;
+      if (dob !== undefined && Number.isNaN(dob.getTime())) {
+        throw new BadRequestException('Invalid dateOfBirth');
+      }
+
+      await tx.userProfile.update({
+        where: { userId },
+        data: {
+          fullName: dto.fullName,
+          avatarUrl: dto.avatarUrl,
+          dateOfBirth: dob,
+          monthlyIncome: dto.monthlyIncome,
+          currency: dto.currency,
+          payday: dto.payday,
+          savingsGoal: dto.savingsGoal,
         },
       });
 
       return tx.user.findUnique({
-        where: { id: userRecord.id },
+        where: { id: userId },
         include: { profile: true },
       });
-    });
-
-    return result;
-  }
-
-  /**
-   * Updates (or creates) the user's profile, then returns full user with profile.
-   */
-  async updateProfileAndReturnUser(userId: string, dto: UpdateUserProfileDto) {
-    await this.prisma.user.upsert({
-      where: { id: userId },
-      update: { email: dto.email },
-      create: {
-        id: userId,
-        email: dto.email ? dto.email : 'dev@mock.local',
-        password: 'mockpass',
-      },
-    });
-
-    await this.prisma.userProfile.upsert({
-      where: { userId },
-      update: {
-        fullName: dto.fullName,
-        avatarUrl: dto.avatarUrl,
-        dateOfBirth: dto.dateOfBirth ? new Date(dto.dateOfBirth) : undefined,
-        monthlyIncome: dto.monthlyIncome,
-        currency: dto.currency,
-        payday: dto.payday,
-        savingsGoal: dto.savingsGoal,
-      },
-      create: {
-        userId,
-        fullName: dto.fullName,
-        avatarUrl: dto.avatarUrl,
-        dateOfBirth: dto.dateOfBirth ? new Date(dto.dateOfBirth) : undefined,
-        monthlyIncome: dto.monthlyIncome ?? 0,
-        currency: dto.currency ?? 'EUR',
-        payday: dto.payday ?? 1,
-        savingsGoal: dto.savingsGoal ?? 0,
-      },
-    });
-
-    return this.prisma.user.findUnique({
-      where: { id: userId },
-      include: { profile: true },
     });
   }
 }

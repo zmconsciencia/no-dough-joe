@@ -1,19 +1,25 @@
-import { Body, Controller, Get, Put } from '@nestjs/common';
-import { User } from '../common/decorators/user.decorator';
-import type { RequestUser } from '../common/types/request-user.interface';
+import { Body, Controller, Get, Put, Req } from '@nestjs/common';
+import type { Request } from 'express';
 import { UserService } from './user.service';
 import { UpdateUserProfileDto } from './dto/update-user-profile.dto';
+import type { AuthUser, UserWithProfile } from './user.types';
 
 @Controller('api/user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
+
   @Get('me')
-  getMe(@User() user: RequestUser) {
-    return this.userService.getOrCreateMe(user);
+  getMe(@Req() req: Request): Promise<UserWithProfile | null> {
+    const user = req.user as AuthUser;
+    return this.userService.getMe(user.id);
   }
 
   @Put('me')
-  updateMe(@User() user: RequestUser, @Body() dto: UpdateUserProfileDto) {
-    return this.userService.updateProfileAndReturnUser(user.id, dto);
+  async updateMe(
+    @Req() req: Request,
+    @Body() dto: UpdateUserProfileDto,
+  ): Promise<UserWithProfile | null> {
+    const user = req.user as AuthUser;
+    return await this.userService.updateProfileAndReturnUser(user.id, dto);
   }
 }
