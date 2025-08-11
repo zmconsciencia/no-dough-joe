@@ -24,11 +24,6 @@ export class UpdateUserProfileDto {
   dateOfBirth?: string;
 
   @IsOptional()
-  @IsNumber()
-  @Min(0)
-  monthlyIncome?: number;
-
-  @IsOptional()
   @IsString()
   currency?: string;
 

@@ -8,7 +8,6 @@ import { useToast } from '../../hooks/useToast';
 import type { UserProfileFormValues } from '../../models/user-profile.model';
 import { CURRENCY_OPTIONS } from '../../constants/currency';
 
-
 type Props = {
   values: UserProfileFormValues;
   onChange: (field: keyof UserProfileFormValues, value: string | number) => void;
@@ -92,21 +91,6 @@ export function UserProfileForm({ values, onChange, onSubmit, saving }: Props) {
 
         <Section title="Financial Information">
           <Stack spacing={2}>
-            <TextField
-              size="small"
-              type="number"
-              label="Monthly Income"
-              fullWidth
-              required
-              slotProps={{
-                input: {
-                  startAdornment: currencySymbol && <InputAdornment position="start">{currencySymbol}</InputAdornment>,
-                },
-                htmlInput: { min: 0, step: 0.01 },
-              }}
-              value={values.monthlyIncome}
-              onChange={(e) => onChange('monthlyIncome', +e.target.value)}
-            />
             <TextField
               size="small"
               type="number"

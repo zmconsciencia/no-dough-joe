@@ -3,7 +3,6 @@ export interface UserProfileFormValues {
   email: string;
   avatarUrl: string;
   dateOfBirth: string;
-  monthlyIncome: number;
   currency: string;
   payday: number;
   savingsGoal: number;

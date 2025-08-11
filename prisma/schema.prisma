@@ -7,31 +7,175 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id          String       @id @default(uuid())
-  email       String       @unique
-  password    String
-  refreshTokenHash  String?
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+enum SourceKind {
+  CASH
+  MEAL_TICKET
+}
 
-  profile     UserProfile?
+enum Recurrence {
+  DAILY
+  WEEKLY
+  MONTHLY
+  YEARLY
+}
+
+model User {
+  id               String       @id @default(uuid())
+  email            String       @unique
+  password         String
+  refreshTokenHash String?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  profile          UserProfile?
+  salaries         SalaryMonth[]
+  bonuses          BonusIncome[]
+  mealTopUps       MealTicketTopUp[]
+  categories       Category[]
+  expenses         Expense[]
+  recurringSeries  RecurringSeries[]
 }
 
 model UserProfile {
-  id             String     @id @default(uuid())
-  userId         String     @unique
-  user           User       @relation(fields: [userId], references: [id])
+  id          String    @id @default(uuid())
+  userId      String    @unique
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  fullName       String?
-  avatarUrl      String?
-  dateOfBirth    DateTime?
+  fullName    String?
+  avatarUrl   String?
+  dateOfBirth DateTime?
 
-  monthlyIncome  Float?
-  currency       String     @default("EUR")
-  payday         Int?       @default(1)
-  savingsGoal    Float?
+  currency    String    @default("EUR")
+  payday      Int?      @default(1)
+  savingsGoal Decimal?  @db.Decimal(12, 2)
 
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model SalaryMonth {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Use first day of month at 00:00:00 UTC
+  month     DateTime
+  amount    Decimal  @db.Decimal(12, 2)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, month], name: "salary_user_month")
+  @@index([userId, month])
+}
+
+model BonusIncome {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  date      DateTime
+  amount    Decimal  @db.Decimal(12, 2)
+  note      String?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, date])
+}
+
+model MealTicketTopUp {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  date      DateTime
+  amount    Decimal  @db.Decimal(12, 2)
+  note      String?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, date])
+  @@unique([userId, date], name: "userId_month")
+}
+
+model Category {
+  id        String  @id @default(uuid())
+  userId    String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name      String
+  color     String  @default("#999999")
+  eligibleForMealTicket Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  expenses         Expense[]
+  recurringSeries  RecurringSeries[]
+
+
+  @@unique([userId, name])
+  @@index([userId])
+}
+
+model Expense {
+  id               String    @id @default(uuid())
+  userId           String
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  categoryId       String
+  category         Category  @relation(fields: [categoryId], references: [id])
+
+  date             DateTime
+  amount           Decimal   @db.Decimal(12, 2)
+  currency         String    @default("EUR")
+  description      String    @default("")
+  recurringSeriesId String?
+  recurringSeries   RecurringSeries? @relation(fields: [recurringSeriesId], references: [id])
+
+  createdAt        DateTime  @default(now())
+  deletedAt        DateTime?
+
+  allocations      ExpenseAllocation[]
+
+  @@index([userId, date])
+  @@index([categoryId, date])
+  @@index([recurringSeriesId])
+}
+
+model ExpenseAllocation {
+  id         String     @id @default(uuid())
+  expenseId  String
+  expense    Expense    @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+
+  source     SourceKind
+  amount     Decimal    @db.Decimal(12, 2)
+
+  @@index([expenseId, source])
+}
+
+model RecurringSeries {
+  id          String     @id @default(uuid())
+  userId      String
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type        String     @default("EXPENSE")
+  categoryId  String
+  category    Category   @relation(fields: [categoryId], references: [id])
+
+  amount      Decimal    @db.Decimal(12, 2)
+  recurrence  Recurrence
+  dayOfMonth  Int?
+  weekday     Int?
+  startDate   DateTime
+  endDate     DateTime?
+  note        String?
+
+  isActive    Boolean    @default(true)
+  nextRunAt   DateTime?
+
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  expenses    Expense[]
+
+  @@index([userId, isActive])
+  @@index([categoryId])
 }

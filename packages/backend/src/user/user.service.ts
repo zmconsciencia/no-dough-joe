@@ -64,7 +64,6 @@ export class UserService {
           fullName: dto.fullName,
           avatarUrl: dto.avatarUrl,
           dateOfBirth: dob,
-          monthlyIncome: dto.monthlyIncome,
           currency: dto.currency,
           payday: dto.payday,
           savingsGoal: dto.savingsGoal,

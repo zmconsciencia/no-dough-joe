@@ -1,4 +1,3 @@
-// in AppShell.tsx
 import {
   AppBar,
   Box,
@@ -15,9 +14,13 @@ import {
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import { Outlet, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
-import { useUserStore } from '../state/user/user.state';
+import { useState, useMemo } from 'react';
+import { SalaryDialog } from '../components/salary/SalaryDialog';
+import { CURRENCY_OPTIONS } from '../constants/currency';
 import { authService } from '../services/auth.service';
+import { useUserStore } from '../state/user/user.state';
+import { BonusDialog } from '../components/bonus/BonusDialog';
+import { MealTicketDialog } from '../components/mealticket/MealTicketDialog';
 
 const drawerWidth = 240;
 
@@ -32,6 +35,12 @@ export default function AppShell() {
   const navigate = useNavigate();
   const toggleDrawer = () => setOpen((v) => !v);
   const user = useUserStore((s) => s.user);
+  const [bonusOpen, setBonusOpen] = useState(false);
+  const [salaryOpen, setSalaryOpen] = useState(false);
+  const [ticketOpen, setTicketOpen] = useState(false);
+
+  const currencyCode = user?.profile?.currency ?? 'EUR';
+  const currencySymbol = useMemo(() => CURRENCY_OPTIONS.find((c) => c.code === currencyCode)?.symbol ?? '', [currencyCode]);
 
   return (
     <Box sx={{ display: 'flex' }}>
@@ -44,8 +53,18 @@ export default function AppShell() {
           <Typography variant="h6" noWrap sx={{ flexGrow: 1 }}>
             No Dough Joe
           </Typography>
+
           {user && (
             <>
+              <Button color="inherit" size="small" onClick={() => setSalaryOpen(true)}>
+                Set Salary
+              </Button>
+              <Button color="inherit" size="small" onClick={() => setBonusOpen(true)}>
+                Add Bonus
+              </Button>
+              <Button color="inherit" size="small" onClick={() => setTicketOpen(true)}>
+                Add Meal Ticket
+              </Button>
               <Typography variant="body2" sx={{ opacity: 0.9 }}>
                 {user.email}
               </Typography>
@@ -93,6 +112,10 @@ export default function AppShell() {
         <Toolbar />
         <Outlet />
       </Box>
+
+      <SalaryDialog open={salaryOpen} onClose={() => setSalaryOpen(false)} currencyCode={currencyCode} />
+      <BonusDialog open={bonusOpen} onClose={() => setBonusOpen(false)} />
+      <MealTicketDialog open={ticketOpen} onClose={() => setTicketOpen(false)} />
     </Box>
   );
 }
