@@ -63,9 +63,11 @@ export function useIncomeData() {
     fetchData();
     const off1 = on(EVENTS.BONUS_CHANGED, () => fetchData());
     const off2 = on(EVENTS.MEALTICKET_CHANGED, () => fetchData());
+    const off3 = on(EVENTS.SALARY_CHANGED, () => fetchData());
     return () => {
       off1();
       off2();
+      off3();
     };
   }, []);
 

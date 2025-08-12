@@ -8,7 +8,7 @@ const setSalary = (payload: SetSalaryInput) => httpService.post<{ affectedMonths
 const getCurrentSalary = (month?: string) =>
   httpService.get<SalaryMonth | null>('api/salary/current', {
     baseURL,
-    params: month ? { month } : undefined,
+    params: month ? { month, _ts: Date.now() } : { _ts: Date.now() },
   });
 
 export const salaryService = { setSalary, getCurrentSalary };

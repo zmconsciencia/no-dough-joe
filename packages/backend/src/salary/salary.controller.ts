@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Post, Query, Req } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Header,
+  Post,
+  Query,
+  Req,
+} from '@nestjs/common';
 import type { Request } from 'express';
 import { IsNumber, IsOptional, IsString, Min } from 'class-validator';
 import { SalaryService } from './salary.service';
@@ -30,6 +38,7 @@ export class SalaryController {
 
   // Read current month’s salary (or a specific month via ?month=YYYY-MM)
   @Get('current')
+  @Header('cache-control', 'no-store')
   getCurrent(@Req() req: Request, @Query('month') month?: string) {
     const user = req.user as { id: string };
     return this.salaryService.getForMonth(user.id, month);
