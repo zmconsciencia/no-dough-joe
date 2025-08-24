@@ -21,6 +21,8 @@ import { authService } from '../services/auth.service';
 import { useUserStore } from '../state/user/user.state';
 import { BonusDialog } from '../components/bonus/BonusDialog';
 import { MealTicketDialog } from '../components/mealticket/MealTicketDialog';
+import { AddExpenseDialog } from '../components/expenses/AddExpenseDialog';
+import { AddCategoryDialog } from '../components/category/AddCategoryDialog';
 
 const drawerWidth = 240;
 
@@ -38,6 +40,8 @@ export default function AppShell() {
   const [bonusOpen, setBonusOpen] = useState(false);
   const [salaryOpen, setSalaryOpen] = useState(false);
   const [ticketOpen, setTicketOpen] = useState(false);
+  const [expenseOpen, setExpenseOpen] = useState(false);
+  const [categoryOpen, setCategoryOpen] = useState(false);
 
   const currencyCode = user?.profile?.currency ?? 'EUR';
   const currencySymbol = useMemo(() => CURRENCY_OPTIONS.find((c) => c.code === currencyCode)?.symbol ?? '', [currencyCode]);
@@ -56,6 +60,12 @@ export default function AppShell() {
 
           {user && (
             <>
+              <Button color="inherit" size="small" onClick={() => setCategoryOpen(true)}>
+                Add Category
+              </Button>
+              <Button color="inherit" size="small" onClick={() => setExpenseOpen(true)}>
+                Add Expense
+              </Button>
               <Button color="inherit" size="small" onClick={() => setSalaryOpen(true)}>
                 Set Salary
               </Button>
@@ -112,10 +122,11 @@ export default function AppShell() {
         <Toolbar />
         <Outlet />
       </Box>
-
+      <AddExpenseDialog open={expenseOpen} onClose={() => setExpenseOpen(false)} />
       <SalaryDialog open={salaryOpen} onClose={() => setSalaryOpen(false)} currencyCode={currencyCode} />
       <BonusDialog open={bonusOpen} onClose={() => setBonusOpen(false)} />
       <MealTicketDialog open={ticketOpen} onClose={() => setTicketOpen(false)} />
+      <AddCategoryDialog open={categoryOpen} onClose={() => setCategoryOpen(false)} />
     </Box>
   );
 }

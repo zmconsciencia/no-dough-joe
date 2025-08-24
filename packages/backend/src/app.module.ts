@@ -13,6 +13,12 @@ import { BonusService } from './bonus/bonus.service';
 import { BonusController } from './bonus/bonus.controller';
 import { MealTicketController } from './mealticket/mealticket.controller';
 import { MealTicketService } from './mealticket/mealticket.service';
+import { ExpenseController } from './expense/expense.controller';
+import { RecurringController } from './recurring/recurring.controller';
+import { ExpenseService } from './expense/expense.service';
+import { RecurringService } from './recurring/recurring.service';
+import { CategoryController } from './category/category.controller';
+import { CategoryService } from './category/category.service';
 
 @Module({
   imports: [AuthModule],
@@ -22,6 +28,9 @@ import { MealTicketService } from './mealticket/mealticket.service';
     SalaryController,
     BonusController,
     MealTicketController,
+    ExpenseController,
+    RecurringController,
+    CategoryController
   ],
   providers: [
     AppService,
@@ -30,6 +39,9 @@ import { MealTicketService } from './mealticket/mealticket.service';
     SalaryService,
     BonusService,
     MealTicketService,
+    ExpenseService,
+    RecurringService,
+    CategoryService,
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,

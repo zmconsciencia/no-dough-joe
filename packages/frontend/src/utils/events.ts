@@ -13,4 +13,7 @@ export const EVENTS = {
   BONUS_CHANGED: 'bonus:changed',
   SALARY_CHANGED: 'salary:changed',
   MEALTICKET_CHANGED: 'mealticket:changed',
+  EXPENSE_CHANGED: 'expense:changed',
+  RECURRING_CHANGED: 'recurring:changed',
+  CATEGORY_CHANGED: 'category:changed',
 };

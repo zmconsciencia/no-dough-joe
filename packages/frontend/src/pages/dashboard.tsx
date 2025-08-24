@@ -20,7 +20,7 @@ const SortableItem = ({ id, children }: { id: string; children: ReactNode }) => 
 };
 
 const Dashboard = () => {
-  const [columns, setColumns] = useState(2);
+  const [columns, setColumns] = useState(3);
   const [order, setOrder] = useState<string[]>(['income', 'budget', 'spending', 'saving']);
 
   const handleDragEnd = ({ active, over }: DragEndEvent) => {

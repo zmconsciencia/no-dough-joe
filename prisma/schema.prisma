@@ -31,7 +31,6 @@ model User {
   salaries         SalaryMonth[]
   bonuses          BonusIncome[]
   mealTopUps       MealTicketTopUp[]
-  categories       Category[]
   expenses         Expense[]
   recurringSeries  RecurringSeries[]
 }
@@ -58,7 +57,6 @@ model SalaryMonth {
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  // Use first day of month at 00:00:00 UTC
   month     DateTime
   amount    Decimal  @db.Decimal(12, 2)
 
@@ -98,22 +96,15 @@ model MealTicketTopUp {
 }
 
 model Category {
-  id        String  @id @default(uuid())
-  userId    String
-  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  name      String
-  color     String  @default("#999999")
+  id        String   @id @default(uuid())
+  name      String   @unique
+  color     String   @default("#999999")
   eligibleForMealTicket Boolean @default(false)
-
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
   expenses         Expense[]
   recurringSeries  RecurringSeries[]
-
-
-  @@unique([userId, name])
-  @@index([userId])
 }
+
 
 model Expense {
   id               String    @id @default(uuid())
@@ -138,6 +129,7 @@ model Expense {
   @@index([userId, date])
   @@index([categoryId, date])
   @@index([recurringSeriesId])
+  @@unique([recurringSeriesId, date], name: "expense_series_date_unique")
 }
 
 model ExpenseAllocation {
